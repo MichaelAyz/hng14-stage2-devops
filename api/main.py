@@ -19,6 +19,10 @@ r = redis.Redis(
     password=os.getenv("REDIS_PASSWORD", None)
 )
 
+@app.get("/")
+def root():
+    return {"message": "API is running"}
+
 @app.post("/jobs")
 def create_job():
     job_id = str(uuid.uuid4())

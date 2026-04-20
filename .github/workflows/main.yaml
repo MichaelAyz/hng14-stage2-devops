@@ -43,7 +43,7 @@ jobs:
         with:
           dockerfile: "*/Dockerfile"
           recursive: true
-          ignore: DL3008,DL3013,DL3018,DL3059,DL3042 || true
+          ignore: DL3008,DL3013,DL3018,DL3059,DL3042
 
   test:
     needs: lint
@@ -66,6 +66,7 @@ jobs:
           REDIS_HOST: mock-redis
           REDIS_PORT: 6379
           REDIS_PASSWORD: mock-password
+          PYTHONPATH: .
         run: |
           pytest --cov=. --cov-report=xml tests/
 
@@ -87,7 +88,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
           driver-opts: network=host
 
@@ -162,7 +163,7 @@ jobs:
         env:
           REDIS_PASSWORD: integration-test-password
         run: |
-          docker-compose up -d
+          docker compose up -d
           # Give services max time to become healthy depending on depends_on
           sleep 15
           
@@ -181,7 +182,7 @@ jobs:
           echo "Polling job $JOB_ID..."
           TIMEOUT=30
           ELAPSED=0
-          while [ $$ELAPSED -lt $$TIMEOUT ]; do
+          while [ $ELAPSED -lt $TIMEOUT ]; do
             STATUS_RES=$(curl -s http://localhost:3000/status/$JOB_ID)
             echo "Status response: $STATUS_RES"
             STATUS=$(echo "$STATUS_RES" | grep -o '"status":"[^"]*' | grep -o '[^"]*$')
@@ -192,7 +193,7 @@ jobs:
             fi
             
             sleep 2
-            ELAPSED=$$((ELAPSED + 2))
+            ELAPSED=$((ELAPSED + 2))
           done
           
           echo "Job did not complete in time"
@@ -203,7 +204,7 @@ jobs:
         env:
           REDIS_PASSWORD: integration-test-password
         run: |
-          docker-compose down
+          docker compose down
 
   deploy:
     needs: integration_test
@@ -224,16 +225,15 @@ jobs:
           docker build -t frontend:new ./frontend
           
           echo "Starting new container alongside old..."
-          # Start it on a different port temporarily to avoid conflict since this is local docker CLI
-          CONTAINER_ID=$$(docker run -d --name frontend_new --network webnet -e API_URL=http://api:8000 frontend:new)
+          CONTAINER_ID=$(docker run -d --name frontend_new --network webnet -e API_URL=http://api:8000 frontend:new)
           
           echo "Polling healthcheck for up to 60 seconds..."
           TIMEOUT=60
           ELAPSED=0
           SUCCESS=false
           
-          while [ $$ELAPSED -lt $$TIMEOUT ]; do
-            STATUS=$$(docker inspect --format='{{json .State.Health.Status}}' $$CONTAINER_ID || echo '"unknown"')
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            STATUS=$(docker inspect --format='{{json .State.Health.Status}}' $CONTAINER_ID || echo '"unknown"')
             
             if [ "$STATUS" == '"healthy"' ]; then
               SUCCESS=true
@@ -243,7 +243,7 @@ jobs:
             fi
             
             sleep 5
-            ELAPSED=$$((ELAPSED + 5))
+            ELAPSED=$((ELAPSED + 5))
           done
           
           if [ "$SUCCESS" = true ]; then
