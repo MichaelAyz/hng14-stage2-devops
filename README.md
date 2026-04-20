@@ -1,30 +1,57 @@
 # HNG Stage 2 DevOps App
 
-A robust multi-service Job Processing system comprised of a Node.js Express frontend, a FastAPI python API, a python backend worker, and a shared Redis node natively containerized with Docker and fully orchestrated employing Docker-Compose.
+A simple Job Processing system. It has four main parts:
+- A Node.js Express frontend
+- A FastAPI Python API
+- A Python background worker
+- A Redis database
+
+Everything is containerized and fully orchestrated using Docker Compose.
 
 ## Prerequisites
-- Docker Engine installed.
-- Docker Compose installed.
+- Docker Engine installed (v20.10 or newer)
+- Docker Compose installed (v2.0 or newer)
 
 ## Startup Instructions
-To bring the entire pristine stack up cleanly on a fresh machine:
-1. Ensure your `.env` is initialized at the repository root mimicking `.env.example`:
+To run this project on your computer:
+
+1. Clone the repository and go into the folder:
+   ```bash
+   git clone https://github.com/MichaelAyz/hng14-stage2-devops.git
+   cd hng14-stage2-devops
+   ```
+
+2. Create a `.env` file by copying the example file:
    ```bash
    cp .env.example .env
    ```
-2. Build and launch the cluster utilizing compose:
+
+3. Build and start the containers:
    ```bash
    docker-compose up -d --build
    ```
 
-## What a Successful Startup Looks Like
-Ensure all components correctly spun up:
+## Checking the Status
+To make sure everything is working, run:
 ```bash
 docker-compose ps
 ```
-The output should list 4 containers (`redis`, `api`, `worker`, `frontend`) transitioning gracefully from `(health: starting)` to `(healthy)`.
-You can visit `http://localhost:3000` via your browser or seamlessly execute:
-```bash
-curl -X POST http://localhost:3000/submit
+
+You should see an output that looks like this:
+```text
+NAME                     IMAGE                       COMMAND                  SERVICE    STATUS
+hng14-stage2-redis-1     redis:7-alpine             "docker-entrypoint.s…"   redis      Up 2 minutes (healthy)
+hng14-stage2-api-1       hng14-stage2-devops-api    "uvicorn main:app --…"   api        Up 2 minutes (healthy)
+hng14-stage2-worker-1    hng14-stage2-devops-worker "python worker.py"       worker     Up 2 minutes (healthy)
+hng14-stage2-frontend-1  hng14-stage2-devops-frontend "node app.js"          frontend   Up 2 minutes (healthy)
 ```
-And continuously poll the generated identifier safely at `http://localhost:3000/status/<job_id>`.
+
+Wait until all 4 containers (`redis`, `api`, `worker`, `frontend`) show as `(healthy)`.
+
+## How to Test
+1. Open your browser and go to `http://localhost:3000` or run this command:
+   ```bash
+   curl -X POST http://localhost:3000/submit
+   ```
+2. You will get a `job_id`. You can check the status of your job at:
+   `http://localhost:3000/status/<job_id>`
