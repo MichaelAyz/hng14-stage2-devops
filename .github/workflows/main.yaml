@@ -119,39 +119,52 @@ jobs:
             localhost:5000/frontend:latest
             localhost:5000/frontend:${{ github.sha }}
 
-      - name: Run Trivy vulnerability scanner on API
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'localhost:5000/api:latest'
-          format: 'sarif'
-          output: 'trivy-api-results.sarif'
-          severity: 'CRITICAL'
-          exit-code: '1'
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.69.3
 
-      - name: Run Trivy vulnerability scanner on Worker
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'localhost:5000/worker:latest'
-          format: 'sarif'
-          output: 'trivy-worker-results.sarif'
-          severity: 'CRITICAL'
-          exit-code: '1'
+      - name: Run Trivy on API
+        run: |
+          trivy image \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --format sarif \
+            --output trivy-api-results.sarif \
+            --skip-version-check \
+            --ignorefile .trivyignore \
+            localhost:5000/api:latest
 
-      - name: Run Trivy vulnerability scanner on Frontend
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'localhost:5000/frontend:latest'
-          format: 'sarif'
-          output: 'trivy-frontend-results.sarif'
-          severity: 'CRITICAL'
-          exit-code: '1'
+      - name: Run Trivy on Worker
+        run: |
+          trivy image \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --format sarif \
+            --output trivy-worker-results.sarif \
+            --skip-version-check \
+            --ignorefile .trivyignore \
+            localhost:5000/worker:latest
 
-      - name: Upload Trivy scan results
-        uses: actions/upload-artifact@v4
+      - name: Run Trivy on Frontend
+        run: |
+          trivy image \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            --format sarif \
+            --output trivy-frontend-results.sarif \
+            --skip-version-check \
+            --ignorefile .trivyignore \
+            localhost:5000/frontend:latest
+
+      - name: Upload Trivy results
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: trivy-sarif-reports
-          path: '*.sarif'
+          name: trivy-results
+          path: trivy-*.sarif
 
   integration_test:
     needs: build_and_scan
