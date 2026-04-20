@@ -2,11 +2,13 @@ FROM python:3.11-alpine AS builder
 
 WORKDIR /app
 COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel jaraco.context
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 FROM python:3.11-alpine
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel jaraco.context
 
 WORKDIR /app
 COPY --from=builder /root/.local /home/appuser/.local
