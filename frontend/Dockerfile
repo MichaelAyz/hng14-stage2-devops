@@ -6,7 +6,8 @@ RUN npm install --production
 
 FROM node:18-alpine
 
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN apk update && apk upgrade --no-cache && \
+    addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /app
 COPY --from=builder --chown=appuser:appgroup /app/node_modules ./node_modules

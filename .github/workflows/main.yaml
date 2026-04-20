@@ -65,7 +65,7 @@ jobs:
         env:
           REDIS_HOST: mock-redis
           REDIS_PORT: 6379
-          REDIS_PASSWORD: mock-password
+          REDIS_PASSWORD: ${{ github.sha }}
           PYTHONPATH: .
         run: |
           pytest --cov=. --cov-report=xml tests/
@@ -161,7 +161,7 @@ jobs:
 
       - name: Start stack
         env:
-          REDIS_PASSWORD: integration-test-password
+          REDIS_PASSWORD: ${{ github.sha }}
         run: |
           docker compose up -d
           # Give services max time to become healthy depending on depends_on
@@ -202,7 +202,7 @@ jobs:
       - name: Teardown stack
         if: always()
         env:
-          REDIS_PASSWORD: integration-test-password
+          REDIS_PASSWORD: ${{ github.sha }}
         run: |
           docker compose down
 
@@ -215,7 +215,7 @@ jobs:
       
       - name: Deploy Local Rolling Script 
         env:
-          REDIS_PASSWORD: production-test-password
+          REDIS_PASSWORD: ${{ github.sha }}
         run: |
           docker network create webnet || true
           # We deploy a mock old container
